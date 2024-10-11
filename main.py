@@ -18,7 +18,7 @@ class Game:
         pg.init()
         pg.mixer.init()
         self.screen = pg.display.set_mode((WIDTH, HEIGHT))
-        pg.display.set_caption("Chris' Game")
+        pg.display.set_caption("Rohan's Game")
         self.clock = pg.time.Clock()
         self.running = True
     # create player block, creates the all_sprites group so that we can batch update and render, defines properties that can be seen in the game system
