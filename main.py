@@ -8,6 +8,23 @@ from tilemap import *
 from os import path
 from random import randint
 
+
+
+'''
+Elevator pitch: 
+
+GOALS : Eat all the enemies
+RULES : You have to get a powerup to eat enemies.
+FEEDBACK: If you collide with an enemy before eating a powerup you die
+FREEDOM : Move around inside the game space
+
+What sentencce does your game make?
+
+When the player collides with an ememy the enemy bounces off
+
+
+'''
+
 # created a game class to instantiate later
 
 # this class is there to organize the elements needed to create a gam
@@ -30,7 +47,11 @@ class Game:
 
     def new(self):
         self.load_data()
+        print(self.map.data)
         self.all_sprites = pg.sprite.Group()
+        self.all_walls = pg.sprite.Group()
+        self.all_mobs = pg.sprite.Group()
+        self.all_powerups = pg.sprite.Group()
         # self.player = Player(self, 1, 1)
         # instantiated a mob
         # self.mob = Mob(self, 100,100)
@@ -49,6 +70,8 @@ class Game:
                     self.player = Player(self, col, row)
                 if tile == 'M':
                     Mob(self, col, row)
+                if tile == 'U':
+                    Powerup(self, col, row)
     
     # using self.running as a boolean to continue running the game
    
@@ -78,10 +101,19 @@ class Game:
 
    
     
+    def draw_text(self, surface, text, size, color, x, y):
+        font_name = pg.font.match_font('arial')
+        font = pg.font.Font(font_name, size)
+        text_surface = font.render(text, True, color)
+        text_rect = text_surface.get_rect()
+        text_rect.midtop = (x,y)
+        surface.blit(text_surface, text_rect)
     
     def draw(self):
         self.screen.fill(WHITE)
         self.all_sprites.draw(self.screen)
+        self.draw_text(self.screen, str(self.dt*1000), 24, WHITE, WIDTH/30, HEIGHT/30)
+        self.draw_text(self.screen, "This game is awesome...", 24, BLACK, WIDTH/2, HEIGHT/24)
         pg.display.flip()
 
 
