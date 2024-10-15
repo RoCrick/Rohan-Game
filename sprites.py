@@ -4,7 +4,8 @@ from pygame.sprite import Sprite
 from settings import *
 import random
 
-class Player(Sprite):
+
+class Player(Sprite):       
     def __init__(self, game, x, y):
         self.game = game
         self.groups = game.all_sprites
@@ -18,7 +19,7 @@ class Player(Sprite):
         self.y = y * TILESIZE
         self.speed = 10
         self.vx, self.vy = 0, 0
-        self.speed=1.5
+        self.coins = 0
     def get_keys(self):
         keys = pg.key.get_pressed()
         if keys[pg.K_w]:
@@ -55,9 +56,15 @@ class Player(Sprite):
     def collide_with_stuff(self, group, kill):
         hits = pg.sprite.spritecollide(self, group, kill)
         if hits:
-            if (hits[0].__class__.__name__) == "Powerup":
-                self.speed += 5
+            if str(hits[0].__class__.__name__) == "Powerup":
                 print("i hit a powerup...")
+                self.speed += 1.5
+            if str(hits[0].__class__.__name__) == "Coin":
+                print("I hit a coin...")
+                self.coins += 1
+            if str(hits[0].__class__.__name__) == "Portal":
+                print("I hit a portal...")
+                self.game.activate_portal()
 
     def update(self):
         self.get_keys()
@@ -65,14 +72,18 @@ class Player(Sprite):
         self.y += self.vy * self.game.dt
         # reverse order to fix collision issues
         
-
         self.collide_with_stuff(self.game.all_powerups, True)
+        self.collide_with_stuff(self.game.all_coins, True)
 
         self.rect.x = self.x
         self.collide_with_walls('x')
         
         self.rect.y = self.y
         self.collide_with_walls('y')
+        
+        # reverse order to fix collision issues
+        
+
 
 
 class Mob(Sprite):
@@ -131,6 +142,35 @@ class Powerup(Sprite):
         Sprite.__init__(self, self.groups)
         self.image = pg.Surface((TILESIZE, TILESIZE))
         self.rect = self.image.get_rect()
+        self.image.fill(BLACK)
+        self.rect.x = x * TILESIZE
+        self.rect.y = y * TILESIZE
+
+
+class Coin(Sprite):
+    def __init__(self, game, x, y):
+        self.game = game
+        self.groups = game.all_sprites, game.all_coins
+        Sprite.__init__(self, self.groups)
+        self.image = pg.Surface((TILESIZE, TILESIZE))
+        self.rect = self.image.get_rect()
         self.image.fill(YELLOW)
         self.rect.x = x * TILESIZE
         self.rect.y = y * TILESIZE
+
+class Portal(Sprite):
+    def __init__(self, game, x, y):
+        self.game = game
+        self.groups = game.all_sprites
+        Sprite.__init__(self, self.groups)
+        self.image = pg.Surface((TILESIZE, TILESIZE))
+        self.rect = self.image.get_rect()
+        self.image.fill(PURPLE)  # Change color as needed for the portal
+        self.rect.x = x * TILESIZE
+        self.rect.y = y * TILESIZE
+
+    def update(self):
+        pass
+
+
+
