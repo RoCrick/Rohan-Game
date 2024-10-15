@@ -2,6 +2,7 @@
 
 #import all needed libraries and modules
 import pygame as pg
+
 from settings import *
 from sprites import *
 from tilemap import *
@@ -17,6 +18,11 @@ GOALS : Eat all the enemies
 RULES : You have to get a powerup to eat enemies.
 FEEDBACK: If you collide with an enemy before eating a powerup you die
 FREEDOM : Move around inside the game space
+
+
+
+
+
 
 What sentencce does your game make?
 
@@ -38,6 +44,7 @@ class Game:
         pg.display.set_caption("Rohan's Game")
         self.clock = pg.time.Clock()
         self.running = True
+        self.portal_active = False
     # create player block, creates the all_sprites group so that we can batch update and render, defines properties that can be seen in the game system
     
     def load_data(self):
@@ -52,6 +59,7 @@ class Game:
         self.all_walls = pg.sprite.Group()
         self.all_mobs = pg.sprite.Group()
         self.all_powerups = pg.sprite.Group()
+        self.all_coins = pg.sprite.Group()
         # self.player = Player(self, 1, 1)
         # instantiated a mob
         # self.mob = Mob(self, 100,100)
@@ -72,9 +80,22 @@ class Game:
                     Mob(self, col, row)
                 if tile == 'U':
                     Powerup(self, col, row)
+                if tile == 'C':
+                    Coin(self, col, row)
+                elif tile == 'T':  
+                    Portal(self, col, row)
     
     # using self.running as a boolean to continue running the game
    
+    def draw(self):
+        if self.portal_active:
+            self.screen.fill(BLACK)  # Change background to black
+        else:
+            self.screen.fill(WHITE)  # Default background color
+        self.all_sprites.draw(self.screen)
+        self.draw_text(self.screen, str(self.dt * 1000), 24, WHITE, WIDTH / 30, HEIGHT / 30)
+        self.draw_text(self.screen, "This game is awesome...", 24, BLACK, WIDTH / 2, HEIGHT / 24)
+        pg.display.flip()
    
     def run(self):
         while self.running:
@@ -108,13 +129,16 @@ class Game:
         text_rect = text_surface.get_rect()
         text_rect.midtop = (x,y)
         surface.blit(text_surface, text_rect)
-    
     def draw(self):
         self.screen.fill(WHITE)
         self.all_sprites.draw(self.screen)
-        self.draw_text(self.screen, str(self.dt*1000), 24, WHITE, WIDTH/30, HEIGHT/30)
-        self.draw_text(self.screen, "This game is awesome...", 24, BLACK, WIDTH/2, HEIGHT/24)
+        self.draw_text(self.screen, str(pg.time.get_ticks()), 24, WHITE, WIDTH/30, HEIGHT/30)
+        self.draw_text(self.screen, "Coins collected: " + str(self.player.coins), 24, BLACK, WIDTH/2, HEIGHT/24)
         pg.display.flip()
+
+
+
+
 
 
 if __name__ == "__main__":
