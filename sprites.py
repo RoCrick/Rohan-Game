@@ -5,7 +5,7 @@ from settings import *
 import random
 
 
-class Player(Sprite):       
+class Player(Sprite):
     def __init__(self, game, x, y):
         self.game = game
         self.groups = game.all_sprites
@@ -17,9 +17,11 @@ class Player(Sprite):
         # self.rect.y = y
         self.x = x * TILESIZE
         self.y = y * TILESIZE
-        self.speed = 10
+        self.speed = 25
         self.vx, self.vy = 0, 0
         self.coins = 0
+        self.health = 100
+        self.dir = ''
     def get_keys(self):
         keys = pg.key.get_pressed()
         if keys[pg.K_w]:
@@ -30,6 +32,23 @@ class Player(Sprite):
             self.vy += self.speed
         if keys[pg.K_d]:
             self.vx += self.speed
+        if keys[pg. K_LSHIFT]:
+            self.get_dir()
+            print(self.dir)
+           
+
+    def get_dir(self):
+        if abs(self.vx) > abs(self.vy):
+            if self.vx > 0:
+                self.dir = (1,0)
+            elif self.vx < 0:
+                self.dir = (-1,0)         
+        if abs(self.vy) > abs(self.vx):
+            if self.vy > 0:
+                self.dir = (0,1)
+            elif self.vy < 0:
+                self.dir = (0,-1)            
+    
     
     def collide_with_walls(self, dir):
         if dir == 'x':
@@ -57,14 +76,14 @@ class Player(Sprite):
         hits = pg.sprite.spritecollide(self, group, kill)
         if hits:
             if str(hits[0].__class__.__name__) == "Powerup":
-                print("i hit a powerup...")
+                print("I hit a powerup...")
                 self.speed += 1.5
             if str(hits[0].__class__.__name__) == "Coin":
                 print("I hit a coin...")
                 self.coins += 1
             if str(hits[0].__class__.__name__) == "Portal":
                 print("I hit a portal...")
-                self.game.activate_portal()
+                self.game.activate_portal()  # Activate the portal
 
     def update(self):
         self.get_keys()
