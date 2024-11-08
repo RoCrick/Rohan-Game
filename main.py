@@ -3,10 +3,13 @@
 #import all needed libraries and modules
 import pygame as pg
 
-from settings import *
+#from settings import *
+from sprites_sidescroller import *
 from sprites import *
 from tilemap import *
 from os import path
+
+import sys
 from random import randint
 
 
@@ -20,13 +23,33 @@ FEEDBACK: If you collide with an enemy before eating a powerup you die
 FREEDOM : Move around inside the game space
 
 
+What I planned to do:
+2 levels: you can access the next level by collecting all the coins(haven't got this to work yet)
+Make Portal work correctly
+Add a leaderboard if I can
+Add Double Jump
+
+What I have done:
 
 
 
 
-What sentencce does your game make?
+Where I am going for beta release:
+make the game more professional looking with more sprites and everything
+add my 2nd level and leaderboard
+
+
+
+
+What sentence does your game make?
 
 When the player collides with an ememy the enemy bounces off
+
+Goals:
+
+Primary goal: 
+
+Beta goal: creating more powerups, and the powerup will be randomized when you hit it(i am currently working on a portal)
 
 
 '''
@@ -44,7 +67,11 @@ class Game:
         pg.display.set_caption("Rohan's Game")
         self.clock = pg.time.Clock()
         self.running = True
-        self.portal_active = False
+        
+
+    def activate_portal(self):
+        self.portal_active = True 
+        print("portal ready")  
     # create player block, creates the all_sprites group so that we can batch update and render, defines properties that can be seen in the game system
     
     def load_data(self):
@@ -57,6 +84,7 @@ class Game:
         print(self.map.data)
         self.all_sprites = pg.sprite.Group()
         self.all_walls = pg.sprite.Group()
+
         self.all_mobs = pg.sprite.Group()
         self.all_powerups = pg.sprite.Group()
         self.all_coins = pg.sprite.Group()
@@ -91,7 +119,7 @@ class Game:
         if self.portal_active:
             self.screen.fill(BLACK)  # Change background to black
         else:
-            self.screen.fill(WHITE)  # Default background color
+         self.screen.fill(WHITE)  # Default background color
         self.all_sprites.draw(self.screen)
         self.draw_text(self.screen, str(self.dt * 1000), 24, WHITE, WIDTH / 30, HEIGHT / 30)
         self.draw_text(self.screen, "This game is awesome...", 24, BLACK, WIDTH / 2, HEIGHT / 24)
@@ -136,6 +164,24 @@ class Game:
         self.draw_text(self.screen, "Coins collected: " + str(self.player.coins), 24, BLACK, WIDTH/2, HEIGHT/24)
         pg.display.flip()
 
+    
+    def show_death_screen(self):
+        self.screen.fill(RED)
+        self.draw_text(self.screen, "wasted", 40, WHITE  , WIDTH/2, HEIGHT/2)
+        pg.display.flip()
+        self.wait_for_key()
+
+    def wait_for_key(self):
+        waiting = True
+        while waiting:
+            self.clock.tick(FPS)
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    waiting = False
+                    self.quit()
+                if event.type == pg.KEYUP:
+                    waiting = False
+
 
 
 
@@ -147,3 +193,5 @@ if __name__ == "__main__":
     g.new()
     # run the game
     g.run()
+    #showing deathscreen
+    g.show_death_screen()
