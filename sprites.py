@@ -184,7 +184,7 @@ class Portal(Sprite):
         Sprite.__init__(self, self.groups)
         self.image = pg.Surface((TILESIZE, TILESIZE))
         self.rect = self.image.get_rect()
-        self.image.fill(PURPLE)  # Change color as needed for the portal
+        self.image.fill(PURPLE)  # Change color as needed for the porta
         self.rect.x = x * TILESIZE
         self.rect.y = y * TILESIZE
 
