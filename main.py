@@ -67,12 +67,13 @@ class Game:
         pg.display.set_caption("Rohan's Game")
         self.clock = pg.time.Clock()
         self.running = True
-        
+        self.portal_active = False
+        self.portal_timer = 0
 
-    def activate_portal(self):
-        self.portal_active = True 
-        print("portal ready")  
-    # create player block, creates the all_sprites group so that we can batch update and render, defines properties that can be seen in the game system
+   def activate_portal(self):
+    self.portal_active = True
+    self.portal_timer = pg.time.get_ticks()  # Record the time when the portal is activated
+    print("portal activated")
     
     def load_data(self):
         self.game_folder = path.dirname(__file__)
@@ -145,6 +146,10 @@ class Game:
     
     def update(self):
         self.all_sprites.update()
+
+         if self.portal_active and pg.time.get_ticks() - self.portal_timer > 5000:  # 5000 ms = 5 seconds
+        self.portal_active = False
+        print("Portal deactivated.")
         # output
         pass
 
