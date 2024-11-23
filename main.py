@@ -71,9 +71,12 @@ class Game:
         self.portal_timer = 0
 
    def activate_portal(self):
-    self.portal_active = True
-    self.portal_timer = pg.time.get_ticks()  # Record the time when the portal is activated
-    print("portal activated")
+        self.portal_active = True
+        self.invulnerable = True  # Player becomes invulnerable
+        self.invulnerable_time = time.time()  # Start the timer for 5 seconds
+        print("Portal activated! Player is now invulnerable.")
+ 
+    # create player block, creates the all_sprites group so that we can batch update and render, defines properties that can be seen in the game system
     
     def load_data(self):
         self.game_folder = path.dirname(__file__)
@@ -132,26 +135,31 @@ class Game:
             self.events()
             self.update()
             self.draw()
+
+        pg.quit()
         # input
     
     # Looks for any events
     def events(self):
+        
         for event in pg.event.get():
-                if event.type == pg.QUIT:
-                    self.running = False
-
+            if event.type == pg.QUIT:
+                self.running = False
         # pg.quit()
 
         # process
     
     def update(self):
+         
+       # Check if the invulnerability period has passed
+        if self.invulnerable and time.time() - self.invulnerable_time > 5:
+            self.invulnerable = False
+            self.portal_active = False  # Reset portal background after 5 seconds
+            print("Invulnerability expired.")
+        
         self.all_sprites.update()
-
-         if self.portal_active and pg.time.get_ticks() - self.portal_timer > 5000:  # 5000 ms = 5 seconds
-        self.portal_active = False
-        print("Portal deactivated.")
-        # output
-        pass
+        # Other update logic
+            
 
    
     
@@ -162,12 +170,22 @@ class Game:
         text_rect = text_surface.get_rect()
         text_rect.midtop = (x,y)
         surface.blit(text_surface, text_rect)
-    def draw(self):
-        self.screen.fill(WHITE)
+    
+
+    def draw (self):
         self.all_sprites.draw(self.screen)
         self.draw_text(self.screen, str(pg.time.get_ticks()), 24, WHITE, WIDTH/30, HEIGHT/30)
         self.draw_text(self.screen, "Coins collected: " + str(self.player.coins), 24, BLACK, WIDTH/2, HEIGHT/24)
-        pg.display.flip()
+      
+        
+        if self.portal_active:  # If portal effect is active
+            self.screen.fill(BLACK)  # Change background to black
+        else:
+            self.screen.fill(WHITE)  # Default background color
+        
+        self.all_sprites.draw(self.screen)
+        pg.display.flip()  # Flip the screen to update the display
+
 
     
     def show_death_screen(self):
