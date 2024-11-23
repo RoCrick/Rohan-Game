@@ -1,9 +1,8 @@
-#this file was created by: Rohan Yarrakonda
+#this file was made by: Rohan Yarrakonda
 import pygame as pg
 from pygame.sprite import Sprite
-from settings import *
 import random
-
+from settings import *
 
 class Player(Sprite):
     def __init__(self, game, x, y):
@@ -13,8 +12,6 @@ class Player(Sprite):
         self.image = pg.Surface((32, 32))
         self.rect = self.image.get_rect()
         self.image.fill(RED)
-        # self.rect.x = x
-        # self.rect.y = y
         self.x = x * TILESIZE
         self.y = y * TILESIZE
         self.speed = 25
@@ -22,6 +19,9 @@ class Player(Sprite):
         self.coins = 0
         self.health = 100
         self.dir = ''
+        self.invulnerable = False  # New attribute for invulnerability state
+        self.invulnerable_time = 0  # To track time when invulnerability started
+    
     def get_keys(self):
         keys = pg.key.get_pressed()
         if keys[pg.K_w]:
@@ -32,31 +32,36 @@ class Player(Sprite):
             self.vy += self.speed
         if keys[pg.K_d]:
             self.vx += self.speed
-        if keys[pg. K_LSHIFT]:
+        if keys[pg.K_LSHIFT]:
             self.get_dir()
             print(self.dir)
-           
 
     def get_dir(self):
         if abs(self.vx) > abs(self.vy):
             if self.vx > 0:
-                self.dir = (1,0)
+                self.dir = (1, 0)
             elif self.vx < 0:
-                self.dir = (-1,0)         
+                self.dir = (-1, 0)         
         if abs(self.vy) > abs(self.vx):
             if self.vy > 0:
-                self.dir = (0,1)
+                self.dir = (0, 1)
             elif self.vy < 0:
-                self.dir = (0,-1)            
+                self.dir = (0, -1) 
     
-    
+    def collide_with_mobs(self):
+        if not self.invulnerable:  # Only collide with mobs if not invulnerable
+            hits = pg.sprite.spritecollide(self, self.game.all_mobs, False)
+            if hits:
+                print("Player hit by mob. game over")
+                self.game.show_death_screen() 
+                
+
     def collide_with_walls(self, dir):
         if dir == 'x':
             hits = pg.sprite.spritecollide(self, self.game.all_walls, False)
             if hits:
                 if self.vx > 0:
                     self.x = hits[0].rect.left - TILESIZE
-                    # self.x = hits[0].rect.left - self.rect.width
                 if self.vx < 0:
                     self.x = hits[0].rect.right
                 self.vx = 0
@@ -66,7 +71,6 @@ class Player(Sprite):
             if hits:
                 if self.vy > 0:
                     self.y = hits[0].rect.top - TILESIZE
-                    # self.y = hits[0].rect.top - self.rect.height
                 if self.vy < 0:
                     self.y = hits[0].rect.bottom
                 self.vy = 0
@@ -83,13 +87,17 @@ class Player(Sprite):
                 self.coins += 1
             if str(hits[0].__class__.__name__) == "Portal":
                 print("I hit a portal...")
-                self.game.activate_portal()  # Activate the portal
+                self.activate_invulnerability()  # Activate invulnerability when hitting the portal
+
+    def activate_invulnerability(self):
+        """Activates invulnerability for 5 seconds."""
+        self.invulnerable = True
+        self.invulnerable_time = pg.time.get_ticks()  # Record the time when invulnerability started
 
     def update(self):
         self.get_keys()
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
-        # reverse order to fix collision issues
         
         self.collide_with_stuff(self.game.all_powerups, True)
         self.collide_with_stuff(self.game.all_coins, True)
@@ -99,10 +107,10 @@ class Player(Sprite):
         
         self.rect.y = self.y
         self.collide_with_walls('y')
-        
-        # reverse order to fix collision issues
-        
 
+        # Check if the invulnerability time has passed (5 seconds)
+        if self.invulnerable and pg.time.get_ticks() - self.invulnerable_time > 5000:
+            self.invulnerable = False  # End invulnerability after 5 seconds
 
 
 class Mob(Sprite):
@@ -116,66 +124,59 @@ class Mob(Sprite):
         self.rect.x = x * TILESIZE
         self.rect.y = y * TILESIZE
         self.speed = 10
-        self.category = random.choice([0,1])
-    
-    def update(self):
-     
-        # moving towards the side of the screen
-        self.rect.x += self.speed
-        # when it hits the side of the screen, it will move in opposite direction
+        self.category = random.choice([0, 1])
 
-        hits = pg.sprite.spritecollide(self, self.game.all_walls, False)
-        
+    def collide_with_stuff(self, group, kill):
+        hits = pg.sprite.spritecollide(self, group, kill)
         if hits:
-            # print("off the screen...")
-            self.speed *= -1
-            self.rect.y += 32
-        if self.rect.right > WIDTH or self.rect.left < 0:
-            # print("off the screen...")
-            self.speed *= -1
-            self.rect.y += 32
-        # elif self.rect.colliderect(self.game.player):
-        #     self.speed *= -1
-        # elif self.rect.colliderect(self):
-        #     self.speed *= -1
-        
+            if str(hits[0].__class__.__name__) == "Powerup":
+                print("Mob hit a powerup...")
+                self.speed += 1.5  # Increase speed if a powerup is hit
+            if str(hits[0].__class__.__name__) == "Coin":
+                print("Mob hit a coin...")
 
-class Wall(Sprite):
-    def __init__(self, game, x, y):
-        self.game = game
-        self.groups = game.all_sprites, game.all_walls
-        Sprite.__init__(self, self.groups)
-        self.image = pg.Surface((TILESIZE, TILESIZE))
-        self.rect = self.image.get_rect()
-        self.image.fill(BLUE)
-        self.rect.x = x * TILESIZE
-        self.rect.y = y * TILESIZE
+    def collide_with_walls(self, dir):
+        if dir == 'x':
+            hits = pg.sprite.spritecollide(self, self.game.all_walls, False)
+            if hits:
+                if self.speed > 0:
+                    self.rect.x = hits[0].rect.left - TILESIZE
+                if self.speed < 0:
+                    self.rect.x = hits[0].rect.right
+                self.speed = -self.speed
+        if dir == 'y':
+            hits = pg.sprite.spritecollide(self, self.game.all_walls, False)
+            if hits:
+                if self.rect.bottom > hits[0].rect.top:
+                    self.rect.bottom = hits[0].rect.top
+                if self.rect.top < hits[0].rect.bottom:
+                    self.rect.top = hits[0].rect.bottom
 
     def update(self):
-        pass
+        # Move the mob left or right
+        self.rect.x += self.speed
+        
+        # Check for collisions with powerups, coins, and other objects
+        self.collide_with_stuff(self.game.all_powerups, True)
+        self.collide_with_stuff(self.game.all_coins, True)
 
-class Powerup(Sprite):
-    def __init__(self, game, x, y):
-        self.game = game
-        self.groups = game.all_sprites, game.all_powerups
-        Sprite.__init__(self, self.groups)
-        self.image = pg.Surface((TILESIZE, TILESIZE))
-        self.rect = self.image.get_rect()
-        self.image.fill(BLACK)
-        self.rect.x = x * TILESIZE
-        self.rect.y = y * TILESIZE
+        # Handle collisions with walls in the x direction
+        self.collide_with_walls('x')
 
+        # Handle collisions with walls in the y direction
+        self.collide_with_walls('y')
 
-class Coin(Sprite):
-    def __init__(self, game, x, y):
-        self.game = game
-        self.groups = game.all_sprites, game.all_coins
-        Sprite.__init__(self, self.groups)
-        self.image = pg.Surface((TILESIZE, TILESIZE))
-        self.rect = self.image.get_rect()
-        self.image.fill(YELLOW)
-        self.rect.x = x * TILESIZE
-        self.rect.y = y * TILESIZE
+        # If the mob hits a wall, reverse its direction
+        hits = pg.sprite.spritecollide(self, self.game.all_walls, False)
+        if hits:
+            self.speed *= -1
+            self.rect.y += 32  # Move down a little to avoid getting stuck in the wall
+        
+        # Reverse direction if the mob goes out of bounds horizontally
+        if self.rect.right > WIDTH or self.rect.left < 0:
+            self.speed *= -1
+            self.rect.y += 32  # Move down when reversing direction
+
 
 class Portal(Sprite):
     def __init__(self, game, x, y):
@@ -184,12 +185,9 @@ class Portal(Sprite):
         Sprite.__init__(self, self.groups)
         self.image = pg.Surface((TILESIZE, TILESIZE))
         self.rect = self.image.get_rect()
-        self.image.fill(PURPLE)  # Change color as needed for the porta
+        self.image.fill(PURPLE)  # You can change this to whatever color the portal should be
         self.rect.x = x * TILESIZE
         self.rect.y = y * TILESIZE
 
     def update(self):
-        pass
-
-
-
+        pass  # No changes needed for this class unless you want some portal animation
