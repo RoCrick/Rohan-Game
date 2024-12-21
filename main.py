@@ -1,6 +1,6 @@
 #this file was made by:Rohan Yarrakonda
 #this code was created by: Rohan Yarrakonda
-#a use of Blackbox AI in one part as cited
+#use of Chat GPT 
 
 #import all needed libraries and modules
 import pygame as pg
@@ -44,7 +44,8 @@ class Game:
         self.running = True
         self.portal_active = False #  Track if the portal effect is active
         self.invulnerable_time = 0 #timer for invulnerability
-        self.invulnerable = False  # Initially, player is not invulnerable
+        self.invulnerable = False  # Initially player is not invulnerable
+        self.game_state = "playing"  
 
         
     # Activate the portal, making the player invulnerable for a short time
@@ -64,6 +65,7 @@ class Game:
     # Create new game elements
     def new(self):
         self.load_data()
+        self.game_state = "playing"
         print(self.map.data)
         self.all_sprites = pg.sprite.Group()
         self.all_walls = pg.sprite.Group()
@@ -115,21 +117,32 @@ class Game:
     #main game loop 
     def run(self):
         while self.running:
-            self.dt = self.clock.tick(FPS) / 1000 # Limit the frame rate and calculate delta time
+            self.dt = self.clock.tick(FPS) / 1000  # Limit the frame rate and calculate delta time
             self.events()
             self.update()
             self.draw()
 
+            # Check game state to show win or lose screen
+            if self.game_state == "won":
+                self.show_win_screen()
+                break  # Exit the loop after showing the win screen
+            elif self.game_state == "lost":
+                self.show_death_screen()
+                break  # Exit the loop after showing the death screen
+
         pg.quit()
+
+        
+
+      
         # input
     
     # Looks for any events
     
     def events(self):
-        
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                self.running = False
+                self.running = False  # Just set running to False to exit the game loop
         # pg.quit()
 
         # process
@@ -139,33 +152,32 @@ class Game:
        # Check if the invulnerability period has passed
         if self.invulnerable and time.time() - self.invulnerable_time > 5:
             self.invulnerable = False
-            self.portal_active = False  # Reset portal background after 5 seconds
-            print("Invulnerability expired.")
-        
-        self.all_sprites.update()
-        # Other update logic
+            self.portal_active = False
 
-        #use of blackbox ai
-        #len returns the number of characters in a string
-        if self.player.coins == len(self.all_coins): #checks if all coins are collected
-            self.show_win_screen() # Show win screen if all coins are collected
+        self.all_sprites.update()
+
+    # Check for collisions with mobs
+        self.player.collide_with_mobs()
+
+    # Check if all coins are collected
+        if self.player.coins == len(self.all_coins):
+            self.game_state = "won"  # Set game state to won
+
+             
+
+
     
-    # Show the win screen when the player wins
-    def show_win_screen(self):
-        self.screen.fill(WHITE)
-        self.draw_text(self.screen, "You Win!", 40, WHITE, WIDTH / 2, HEIGHT / 2)
-        pg.display.flip()
-        self.wait_for_key()  # Wait for a key press to continue    
+      
 
    
     
     def draw_text(self, surface, text, size, color, x, y):
         font_name = pg.font.match_font('arial')
         font = pg.font.Font(font_name, size)
-        text_surface = font.render(text, True, color) # Render the text
+        text_surface = font.render(text, True, color)
         text_rect = text_surface.get_rect()
         text_rect.midtop = (x,y)
-        surface.blit(text_surface, text_rect) # Draw the text on the surface
+        surface.blit(text_surface, text_rect)
     
     # Draw all sprites 
     def draw (self):
@@ -183,24 +195,37 @@ class Game:
         pg.display.flip()  # Flip the screen to update the display
 
 
+    #use of chat gpt
+        #len returns the number of characters in a string
+        if self.player.coins == len(self.all_coins): #checks if all coins are collected
+            self.show_win_screen() # Show win screen if all coins are collected
     
-    def show_death_screen(self):
-        self.screen.fill(RED)
-        self.draw_text(self.screen, "Game Over", 40, WHITE, WIDTH / 2, HEIGHT / 2)
+    def show_win_screen(self):
+        self.screen.fill(WHITE)
+        self.draw_text(self.screen, "You Win!", 40, BLACK, WIDTH / 2, HEIGHT / 2)
         pg.display.flip()
         self.wait_for_key()  # Wait for a key press to continue
+        
+
+    def show_death_screen(self):
+        self.screen.fill(RED)
+        self.draw_text(self.screen, "You Died", 40, WHITE, WIDTH/ 2, HEIGHT/2)
+        pg.display.flip()
+        pg.quit()
+        self.wait_for_key()
+    
 
 
     def wait_for_key(self):
         waiting = True
         while waiting:
-            self.clock.tick(FPS) # Limit frame rate 
+            self.clock.tick(FPS)
             for event in pg.event.get():
                 if event.type == pg.QUIT:
-                    waiting = False # Exit waiting loop
-                    self.quit()
+                    waiting = False
+                    self.running = False
                 if event.type == pg.KEYUP:
-                    waiting = False # Exit waiting loop on key press
+                    waiting = False
 
 
 
@@ -208,10 +233,12 @@ class Game:
 
 
 if __name__ == "__main__":
-    g = Game() #Create a new game instance
-    # create all game elements with the new method
+    g = Game()
+    # create all game elements 
     g.new()
-    # run the game
+    
     g.run()
-    #showing deathscreen
+
     g.show_death_screen()
+
+pg.quit()
